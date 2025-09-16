@@ -56,6 +56,15 @@ resource "aws_lb_target_group" "nginx_a" {
   protocol     = "HTTP"
   vpc_id       = var.vpc_id
   target_type  = "ip"
+  
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    interval            = 30
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -68,6 +77,15 @@ resource "aws_lb_target_group" "nginx_b" {
   protocol     = "HTTP"
   vpc_id       = var.vpc_id
   target_type  = "ip"
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    interval            = 30
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -200,6 +218,33 @@ resource "aws_ecs_service" "nginx_a" {
     target_group_arn = aws_lb_target_group.nginx_a.arn
     container_name   = "nginx-a"
     container_port   = 80
+  }
+}
+
+# Define the Auto Scaling Target for the nginx-a service
+resource "aws_appautoscaling_target" "nginx_a" {
+  max_capacity       = 3 # Max 3 tasks
+  min_capacity       = 1 # Min 1 task
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.nginx_a.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+# Define the Auto Scaling Policy for the nginx-a service
+resource "aws_appautoscaling_policy" "nginx_a_cpu" {
+  name               = "nginx-a-cpu-scaling"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.nginx_a.resource_id
+  scalable_dimension = aws_appautoscaling_target.nginx_a.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.nginx_a.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = 75 # Target 75% CPU utilization
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    scale_in_cooldown  = 300 # Wait 5 mins before scaling in
+    scale_out_cooldown = 300 # Wait 5 mins before scaling out
   }
 }
 

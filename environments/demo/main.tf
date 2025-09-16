@@ -22,6 +22,10 @@ module "networking" {
   source = "../../modules/networking"
 }
 
+module "acm" {
+  source = "../../modules/acm"
+}
+
 module "iam" {
   source         = "../../modules/iam"
   s3_bucket_name = "my-unique-upload-bucket-${random_string.bucket_suffix.result}"
@@ -41,4 +45,5 @@ module "ecs" {
   private_app_subnet_id       = module.networking.private_app_subnet_id
   ecs_task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   ec2_instance_profile_name   = module.iam.ec2_instance_profile_name
+  acm_certificate_arn         = module.acm.acm_certificate_arn
 }

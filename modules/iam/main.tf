@@ -81,3 +81,32 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_attachment" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+
+
+# Specific policy to allow creating and writing to CloudWatch Logs
+resource "aws_iam_policy" "ecs_logging_policy" {
+  name        = "ecs-logging-policy"
+  description = "Allows ECS tasks to write logs to CloudWatch"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ],
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# Attach the new logging policy to the ECS task execution role
+resource "aws_iam_role_policy_attachment" "ecs_logging_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ecs_logging_policy.arn
+}
+
