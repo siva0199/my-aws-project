@@ -23,18 +23,18 @@ module "networking" {
 }
 
 module "iam" {
-  source = "../../modules/iam"
+  source         = "../../modules/iam"
   s3_bucket_name = "my-unique-upload-bucket-${random_string.bucket_suffix.result}"
 }
 
 module "serverless" {
-  source = "../../modules/serverless"
+  source               = "../../modules/serverless"
   s3_bucket_name       = "my-unique-upload-bucket-${random_string.bucket_suffix.result}"
   lambda_exec_role_arn = module.iam.lambda_exec_role_arn
 }
 
 module "ecs" {
-  source = "../../modules/ecs"
+  source                      = "../../modules/ecs"
   vpc_id                      = module.networking.vpc_id
   public_subnet_id            = module.networking.public_subnet_id
   public_subnet_b_id          = module.networking.public_subnet_b_id
