@@ -98,7 +98,7 @@ resource "aws_iam_policy" "ecs_logging_policy" {
           "logs:PutLogEvents",
           "logs:DescribeLogStreams"
         ],
-        Resource = "arn:aws:logs:*:*:*"
+        Resource = "*"
       }
     ]
   })
